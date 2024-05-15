@@ -2,96 +2,69 @@ package main
 
 import (
 	"log"
+	"path/filepath"
 
-	"github.com/EdwinPirajan/RenewalCore.git/services"
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/widget"
+	"github.com/AlmacontactTI/GOLAND.git/services"
+	"golang.org/x/crypto/ssh"
 )
 
 func main() {
+	a := app.New()
+	w := a.NewWindow("RenewalCore")
 
-	client, err := services.NewSFTPClient()
-	if err != nil {
-		log.Fatalf("Error al crear el cliente SFTP: %s", err)
+	// Credenciales SFTP
+	sftpServer := "10.96.16.28:22"
+	sftpUser := "ftpti"
+	sftpPassword := "adc#2024"
+	config := &ssh.ClientConfig{
+		User: sftpUser,
+		Auth: []ssh.AuthMethod{
+			ssh.Password(sftpPassword),
+		},
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	}
 
+	client, err := services.NewSFTPClient(sftpServer, config)
+	if err != nil {
+		log.Fatalf("Error al crear el cliente SFTP: %s", err)
+		return
+	}
 	defer client.Close()
 
-	services.PrintFiles(client)
-	// 	procesosACerrar := []string{"AC Administrador de Clientes.exe"}
+	remoteFilePath := "/hdvsftp/ftpti/AC/AC Administrador de Clientes.exe"
+	// localDirectory := "C:\\progra~1\\acadmi~1\\"
+	localDirectory := "C:\\Program Files\\AC Administración de Clientes\\"
+	// localDirectory := "C:\\Users\\jpulido\\Documents\\Goland_copy"
+	localFileName := "AC Administrador de Clientes.exe"
 
-	// 	// Cierra los procesos especificados
-	// 	for _, proceso := range procesosACerrar {
-	// 		cmd := exec.Command("taskkill", "/IM", proceso, "/F")
-	// 		err := cmd.Run()
-	// 		if err != nil {
-	// 			fmt.Println("Error cerrando el proceso:", err)
-	// 		}
-	// 	}
+	services.KillProcess("AC Administrador de Clientes.exe")
 
-	// 	// Copia los archivos desde la ubicación remota a la local
-	// 	origen := `\\10.98.16.27\publica_claro$\Tecnologia\ac\AC_ACTUALIZADORES 22.01.2019\AC_Personas`
-	// 	destino := `C:\progra~1\acadmi~1`
-	// 	err := CopyDir(origen, destino)
-	// 	if err != nil {
-	// 		fmt.Println("Error copiando los archivos:", err)
-	// 	}
+	button := widget.NewButton("Actualizar archivo", func() {
+		localPath := filepath.Join(localDirectory, localFileName)
+		if err := services.CopyFile(client, remoteFilePath, localPath); err != nil {
+			log.Fatalf("Error al copiar el archivo: %s", err)
+			return
+		}
 
-	// }
+		// Reemplazar el contenido de la ventana principal
+		confirmLabel := widget.NewLabel("La aplicación se ha actualizado correctamente.")
+		confirmButton := widget.NewButton("Aceptar", func() {
+			a.Quit()
+		})
+		confirmContainer := container.NewVBox(
+			confirmLabel,
+			confirmButton,
+		)
+		w.SetContent(confirmContainer)
+		w.Resize(fyne.NewSize(300, 90))
+	})
 
-	// // CopyDir copia un directorio completo de origen a destino
-	// func CopyDir(src string, dest string) error {
-	// 	var err error
-	// 	var fds []os.FileInfo
-	// 	var srcinfo os.FileInfo
-
-	// 	if srcinfo, err = os.Stat(src); err != nil {
-	// 		return eservices
-	// 	}
-
-	// 	if err = os.MkdirAll(dest, srcinfo.Mode()); err != nil {
-	// 		return err
-	// 	}
-
-	// 	if fds, err = ioutil.ReadDir(src); err != nil {
-	// 		return err
-	// 	}
-	// 	for _, fd := range fds {
-	// 		srcfp := filepath.Join(src, fd.Name())
-	// 		destfp := filepath.Join(dest, fd.Name())
-
-	// 		if fd.IsDir() {
-	// 			if err = CopyDir(srcfp, destfp); err != nil {
-	// 				fmt.Println(err)
-	// 			}
-	// 		} else {
-	// 			if err = CopyFile(srcfp, destfp); err != nil {
-	// 				fmt.Println(err)
-	// 			}
-	// 		}
-	// 	}
-	// 	return nil
-	// }
-
-	// func CopyFile(src, dest string) error {
-	// 	var err error
-	// 	var srcfd *os.File
-	// 	var destfd *os.File
-	// 	var srcinfo os.FileInfo
-
-	// 	if srcfd, err = os.Open(src); err != nil {
-	// 		return err
-	// 	}
-	// 	defer srcfd.Close()
-
-	// 	if destfd, err = os.Create(dest); err != nil {
-	// 		return err
-	// 	}
-	// 	defer destfd.Close()
-
-	// 	if _, err = io.Copy(destfd, srcfd); err != nil {
-	// 		return err
-	// 	}
-	// 	if srcinfo, err = os.Stat(src); err != nil {
-	// 		return err
-	// 	}
-	// 	return os.Chmod(dest, srcinfo.Mode())
+	container := container.NewVBox(button)
+	w.SetContent(container)
+	w.Resize(fyne.NewSize(300, 50))
+	w.ShowAndRun()
 }

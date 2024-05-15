@@ -7,8 +7,9 @@ import (
 	"github.com/pkg/sftp"
 )
 
+// ListFiles obtiene la lista de archivos en el directorio /hdvsftp/ftpti
 func ListFiles(client *sftp.Client) ([]string, error) {
-	files, err := client.ReadDir("/hdvsftp/ftpti")
+	files, err := client.ReadDir("/hdvsftp/ftpti/AC")
 	if err != nil {
 		return nil, err
 	}
@@ -21,6 +22,7 @@ func ListFiles(client *sftp.Client) ([]string, error) {
 	return fileNames, nil
 }
 
+// PrintFiles imprime la lista de archivos en el directorio /hdvsftp/ftpti
 func PrintFiles(client *sftp.Client) {
 	files, err := ListFiles(client)
 	if err != nil {

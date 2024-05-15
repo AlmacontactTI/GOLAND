@@ -1,0 +1,45 @@
+package main
+
+import (
+	"fmt"
+	"os"
+	"os/exec"
+)
+
+func main() {
+	// Comando para cerrar procesos con el nombre "AC Administrador de Clientes.exe"
+	cmdKill := exec.Command("taskkill", "/F", "/IM", "AC Administrador de Clientes.exe")
+	errKill := cmdKill.Run()
+	if errKill != nil {
+		fmt.Println("Error al cerrar procesos:", errKill)
+		os.Exit(1)
+	}
+	fmt.Println("Procesos cerrados exitosamente.")
+
+	src := "\\\\10.98.16.27\\publica_claro$\\Tecnologia\\ac\\AC_ACTUALIZADORES 22.01.2019\\AC_Personas"
+	dst := "C:\\progra~1\\acadmi~1"
+
+	// Copiar archivos desde la ubicación de origen a una carpeta temporal
+	tempDir := "C:\\temp_acadmi"
+	cmdCopyToTemp := exec.Command("xcopy", src, tempDir, "/Y", "/I", "/S")
+	errCopyToTemp := cmdCopyToTemp.Run()
+	if errCopyToTemp != nil {
+		fmt.Println("Error al copiar archivos a la carpeta temporal:", errCopyToTemp)
+		os.Exit(1)
+	}
+
+	// Copiar archivos desde la carpeta temporal a la ubicación de destino
+	cmdCopyFromTemp := exec.Command("xcopy", tempDir, dst, "/Y", "/I", "/S")
+	errCopyFromTemp := cmdCopyFromTemp.Run()
+	if errCopyFromTemp != nil {
+		fmt.Println("Error al copiar archivos desde la carpeta temporal:", errCopyFromTemp)
+		os.Exit(1)
+	}
+
+	// Eliminar la carpeta temporal
+	errRemoveTemp := os.RemoveAll(tempDir)
+	if errRemoveTemp != nil {
+		fmt.Println("Error al eliminar la carpeta temporal:", errRemoveTemp)
+		os.Exit(1)
+	}
+}
